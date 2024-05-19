@@ -1,5 +1,5 @@
 pub mod window;
 
 fn main() {
-    window::run();
+    pollster::block_on(window::run());
 }
