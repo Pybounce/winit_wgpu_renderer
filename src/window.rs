@@ -1,10 +1,10 @@
+use wgpu::PresentMode;
 use winit::{
-    event::{ self, ElementState, Event, KeyEvent, WindowEvent },
+    event::{ ElementState, Event, KeyEvent, WindowEvent },
     event_loop::{ ControlFlow, EventLoop },
     keyboard::{ KeyCode, PhysicalKey },
     window::{ Window, WindowBuilder },
 };
-use wgpu::{ CommandEncoderDescriptor, PresentMode };
 
 struct State<'a> {
     surface: wgpu::Surface<'a>,
