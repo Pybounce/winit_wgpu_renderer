@@ -181,10 +181,11 @@ impl<'a> State<'a> {
             })
         );
 
-        let _render_pass = encoder.begin_render_pass(
+        let mut render_pass = encoder.begin_render_pass(
             &(wgpu::RenderPassDescriptor {
                 label: Some("Render Pass"),
                 color_attachments: &[
+                    // This is what @location(0) in the fragment shader targets
                     Some(wgpu::RenderPassColorAttachment {
                         view: &view,
                         resolve_target: None,
@@ -193,18 +194,21 @@ impl<'a> State<'a> {
                                 r: 0.1,
                                 g: 0.2,
                                 b: 0.3,
-                                a: 0.5,
+                                a: 1.0,
                             }),
                             store: wgpu::StoreOp::Store,
                         },
                     }),
                 ],
                 depth_stencil_attachment: None,
-                occlusion_query_set: None,
                 timestamp_writes: None,
+                occlusion_query_set: None,
             })
         );
-        drop(_render_pass);
+
+        render_pass.set_pipeline(&self.render_pipeline);
+        render_pass.draw(0..3, 0..1);
+        drop(render_pass);
 
         // submit will accept anything that implements IntoIter
         self.queue.submit(std::iter::once(encoder.finish()));
