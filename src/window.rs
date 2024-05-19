@@ -1,5 +1,5 @@
 use winit::{
-    event::{ ElementState, Event, KeyEvent, WindowEvent },
+    event::{ self, ElementState, Event, KeyEvent, WindowEvent },
     event_loop::{ ControlFlow, EventLoop },
     keyboard::{ KeyCode, PhysicalKey },
     window::{ Window, WindowBuilder },
@@ -110,7 +110,7 @@ impl<'a> State<'a> {
         self.surface.configure(&self.device, &self.config);
     }
     ///Returns whether or not the event has been fully processed
-    fn input(&mut self, event: &WindowEvent) -> bool {
+    fn input(&mut self, _event: &WindowEvent) -> bool {
         false //Temp since we don't want to capture any events
     }
 
@@ -163,6 +163,7 @@ impl<'a> State<'a> {
 pub async fn run() {
     env_logger::init();
     let event_loop = EventLoop::new().unwrap();
+    event_loop.set_control_flow(ControlFlow::Wait);
     let window = WindowBuilder::new().build(&event_loop).unwrap();
 
     let mut state = State::new(&window).await;
