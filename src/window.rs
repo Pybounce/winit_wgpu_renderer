@@ -1,10 +1,10 @@
+use wgpu::PresentMode;
 use winit::{
-    event::{ self, ElementState, Event, KeyEvent, WindowEvent },
+    event::{ ElementState, Event, KeyEvent, WindowEvent },
     event_loop::{ ControlFlow, EventLoop },
     keyboard::{ KeyCode, PhysicalKey },
     window::{ Window, WindowBuilder },
 };
-use wgpu::{ CommandEncoderDescriptor, PresentMode };
 
 struct State<'a> {
     surface: wgpu::Surface<'a>,
@@ -12,6 +12,7 @@ struct State<'a> {
     queue: wgpu::Queue,
     config: wgpu::SurfaceConfiguration,
     size: winit::dpi::PhysicalSize<u32>, //todo: why store size here if it's in config.[height/width]?
+    render_pipeline: wgpu::RenderPipeline,
     //More comments stolen from online docs
     // The window must be declared after the surface so
     // it gets dropped after it as the surface contains
@@ -84,6 +85,58 @@ impl<'a> State<'a> {
             view_formats: vec![],
         };
 
+        let shader = device.create_shader_module(wgpu::ShaderModuleDescriptor {
+            label: Some("Shader"),
+            source: wgpu::ShaderSource::Wgsl(include_str!("shader.wgsl").into()),
+        });
+
+        let render_pipeline_layout = device.create_pipeline_layout(
+            &(wgpu::PipelineLayoutDescriptor {
+                label: Some("Render Pipeline Layout"),
+                bind_group_layouts: &[],
+                push_constant_ranges: &[],
+            })
+        );
+
+        let render_pipeline = device.create_render_pipeline(
+            &(wgpu::RenderPipelineDescriptor {
+                label: Some("Render Pipeline"),
+                layout: Some(&render_pipeline_layout),
+                vertex: wgpu::VertexState {
+                    module: &shader,
+                    entry_point: "vs_main",
+                    buffers: &[],
+                },
+                fragment: Some(wgpu::FragmentState {
+                    module: &shader,
+                    entry_point: "fs_main",
+                    targets: &[
+                        Some(wgpu::ColorTargetState {
+                            format: config.format,
+                            blend: Some(wgpu::BlendState::REPLACE),
+                            write_mask: wgpu::ColorWrites::ALL,
+                        }),
+                    ],
+                }),
+                primitive: wgpu::PrimitiveState {
+                    topology: wgpu::PrimitiveTopology::TriangleList,
+                    strip_index_format: None,
+                    front_face: wgpu::FrontFace::Ccw,
+                    cull_mode: Some(wgpu::Face::Back),
+                    unclipped_depth: false,
+                    polygon_mode: wgpu::PolygonMode::Fill,
+                    conservative: false,
+                },
+                depth_stencil: None,
+                multisample: wgpu::MultisampleState {
+                    count: 1,
+                    mask: !0,
+                    alpha_to_coverage_enabled: false,
+                },
+                multiview: None,
+            })
+        );
+
         Self {
             surface,
             device,
@@ -91,6 +144,7 @@ impl<'a> State<'a> {
             config,
             size,
             window,
+            render_pipeline,
         }
     }
 
@@ -127,10 +181,11 @@ impl<'a> State<'a> {
             })
         );
 
-        let _render_pass = encoder.begin_render_pass(
+        let mut render_pass = encoder.begin_render_pass(
             &(wgpu::RenderPassDescriptor {
                 label: Some("Render Pass"),
                 color_attachments: &[
+                    // This is what @location(0) in the fragment shader targets
                     Some(wgpu::RenderPassColorAttachment {
                         view: &view,
                         resolve_target: None,
@@ -139,18 +194,21 @@ impl<'a> State<'a> {
                                 r: 0.1,
                                 g: 0.2,
                                 b: 0.3,
-                                a: 0.5,
+                                a: 1.0,
                             }),
                             store: wgpu::StoreOp::Store,
                         },
                     }),
                 ],
                 depth_stencil_attachment: None,
-                occlusion_query_set: None,
                 timestamp_writes: None,
+                occlusion_query_set: None,
             })
         );
-        drop(_render_pass);
+
+        render_pass.set_pipeline(&self.render_pipeline);
+        render_pass.draw(0..3, 0..1);
+        drop(render_pass);
 
         // submit will accept anything that implements IntoIter
         self.queue.submit(std::iter::once(encoder.finish()));
