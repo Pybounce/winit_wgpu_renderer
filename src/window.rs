@@ -11,7 +11,7 @@ struct State<'a> {
     device: wgpu::Device,
     queue: wgpu::Queue,
     config: wgpu::SurfaceConfiguration,
-    size: winit::dpi::PhysicalSize<u32>,
+    size: winit::dpi::PhysicalSize<u32>, //todo: why store size here if it's in config.[height/width]?
     //More comments stolen from online docs
     // The window must be declared after the surface so
     // it gets dropped after it as the surface contains
@@ -98,8 +98,16 @@ impl<'a> State<'a> {
         &self.window
     }
 
+    //todo: This method is so fucking slow.
+    //Resizing the page makes it look laggy when this method is called
     fn resize(&mut self, new_size: winit::dpi::PhysicalSize<u32>) {
-        todo!()
+        if new_size.width <= 0 || new_size.height <= 0 {
+            return;
+        }
+        self.size = new_size;
+        self.config.width = new_size.width;
+        self.config.height = new_size.height;
+        self.surface.configure(&self.device, &self.config);
     }
 
     fn input(&mut self, event: &WindowEvent) -> bool {
@@ -135,6 +143,15 @@ pub async fn run() {
                           },
                           ..
                       } => control_flow.exit(),
+                    WindowEvent::Resized(physical_size) => {
+                        state.resize(*physical_size);
+                    }
+                    WindowEvent::ScaleFactorChanged { .. } => {
+                        // This was changed temporarily because once again the docs are outdated/don't exist
+                        //https://github.com/rust-windowing/winit/issues/3080
+                        //https://sotrh.github.io/learn-wgpu/beginner/tutorial2-surface/#resize
+                        state.resize(state.window().inner_size());
+                    }
                     _ => {}
                 }
             _ => {}
