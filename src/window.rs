@@ -109,9 +109,9 @@ impl<'a> State<'a> {
         self.config.height = new_size.height;
         self.surface.configure(&self.device, &self.config);
     }
-
+    ///Returns whether or not the event has been fully processed
     fn input(&mut self, event: &WindowEvent) -> bool {
-        todo!()
+        false //Temp since we don't want to capture any events
     }
 
     fn update(&mut self) {
@@ -132,7 +132,10 @@ pub async fn run() {
 
     let _ = event_loop.run(move |event, control_flow| {
         match event {
-            Event::WindowEvent { ref event, window_id } if window_id == state.window().id() =>
+            Event::WindowEvent { ref event, window_id } if
+                window_id == state.window().id() &&
+                !state.input(event)
+            =>
                 match event {
                     | WindowEvent::CloseRequested
                     | WindowEvent::KeyboardInput {
