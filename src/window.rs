@@ -117,6 +117,7 @@ impl<'a> State<'a> {
             .copied()
             .find(|f| f.is_srgb())
             .unwrap_or(surface_caps.formats[0]);
+
         let config = wgpu::SurfaceConfiguration {
             usage: wgpu::TextureUsages::RENDER_ATTACHMENT,
             format: surface_format,
@@ -258,7 +259,7 @@ impl<'a> State<'a> {
                                 r: 0.1,
                                 g: 0.2,
                                 b: 0.3,
-                                a: 1.0,
+                                a: 0.3,
                             }),
                             store: wgpu::StoreOp::Store,
                         },
@@ -288,7 +289,7 @@ pub async fn run() {
     env_logger::init();
     let event_loop = EventLoop::new().unwrap();
     event_loop.set_control_flow(ControlFlow::Wait);
-    let window = WindowBuilder::new().build(&event_loop).unwrap();
+    let window = WindowBuilder::new().with_transparent(true).build(&event_loop).unwrap();
 
     let mut state = State::new(&window).await;
 
