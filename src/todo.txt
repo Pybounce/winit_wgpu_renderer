@@ -1,5 +1,7 @@
 - If on windows and can pick between vulkan and dx, pick dx. 
     On vulkan, resizing the window lags quit a bit and looks bad
 - If multiplied compositeAlphaMode is avaliable, use it, otherwise just use opaque
+- Split out window.rs into different files?
 
+Notes:
 - AMD drivers don't seem to have transparency
