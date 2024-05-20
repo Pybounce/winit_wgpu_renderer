@@ -124,7 +124,13 @@ impl<'a> State<'a> {
             width: size.width,
             height: size.height,
             present_mode: PresentMode::Fifo,
-            alpha_mode: surface_caps.alpha_modes[0],
+            alpha_mode: if
+                surface_caps.alpha_modes.contains(&wgpu::CompositeAlphaMode::PostMultiplied)
+            {
+                wgpu::CompositeAlphaMode::PostMultiplied
+            } else {
+                surface_caps.alpha_modes[0]
+            },
             desired_maximum_frame_latency: 2,
             view_formats: vec![],
         };
